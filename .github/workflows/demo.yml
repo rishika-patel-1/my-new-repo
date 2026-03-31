@@ -10,9 +10,7 @@ DOCKER_IMAGE: rishika742/node-app
 NODE_VERSION: 18
 
 jobs:
-
 build-test:
-name: Build and Test
 runs-on: ubuntu-latest
 
 ```
@@ -20,20 +18,19 @@ steps:
   - name: Checkout Code
     uses: actions/checkout@v3
 
-  - name: Setup Node.js
+  - name: Setup Node
     uses: actions/setup-node@v3
     with:
-      node-version: ${{ env.NODE_VERSION }}
+      node-version: 18
 
   - name: Install Dependencies
-    run: npm ci
+    run: npm install
 
   - name: Run Tests
     run: npm test
 ```
 
 docker:
-name: Build and Push Docker Image
 runs-on: ubuntu-latest
 needs: build-test
 
@@ -49,32 +46,27 @@ steps:
       password: ${{ secrets.DOCKER_TOKEN }}
 
   - name: Build Docker Image
-    run: docker build -t $DOCKER_IMAGE:${{ github.sha }} .
-
-  - name: Tag Docker Image
-    run: docker tag $DOCKER_IMAGE:${{ github.sha }} $DOCKER_IMAGE:latest
+    run: docker build -t rishika742/node-app:latest .
 
   - name: Push Docker Image
-    run: docker push $DOCKER_IMAGE:latest
+    run: docker push rishika742/node-app:latest
 ```
 
 deploy:
-name: Deploy to EC2
 runs-on: ubuntu-latest
 needs: docker
 
 ```
 steps:
-  - name: Deploy via SSH
+  - name: Deploy to EC2
     uses: appleboy/ssh-action@v0.1.6
     with:
       host: ${{ secrets.SERVER_IP }}
       username: ubuntu
       key: ${{ secrets.SSH_PRIVATE_KEY }}
       script: |
-        docker pull $DOCKER_IMAGE:latest
+        docker pull rishika742/node-app:latest
         docker stop node-app || true
         docker rm node-app || true
-        docker run -d -p 80:3000 --name node-app $DOCKER_IMAGE:latest
+        docker run -d -p 80:3000 --name node-app rishika742/node-app:latest
 ```
-
