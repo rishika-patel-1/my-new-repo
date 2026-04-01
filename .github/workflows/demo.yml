@@ -8,6 +8,7 @@ on:
 env:
   DOCKER_IMAGE: rishika742/node-app
   NODE_VERSION: 18
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-test:
@@ -43,10 +44,10 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Build Docker Image
-        run: docker build -t $DOCKER_IMAGE:latest .
+        run: docker build -t ${{ env.DOCKER_IMAGE }}:latest .
 
       - name: Push Docker Image
-        run: docker push $DOCKER_IMAGE:latest
+        run: docker push ${{ env.DOCKER_IMAGE }}:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -60,7 +61,8 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker pull $DOCKER_IMAGE:latest
+            docker pull ${{ env.DOCKER_IMAGE }}:latest
             docker stop node-app || true
             docker rm node-app || true
-            docker run -d -p 80:3000 --name node-app $DOCKER_IMAGE:latest
+            docker run -d -p 80:3000 --name node-app ${{ env.DOCKER_IMAGE }}:latest
+
